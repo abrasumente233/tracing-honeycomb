@@ -1,6 +1,6 @@
 use std::{env, str::FromStr, time::Duration};
 use tokio::process::Command;
-use tokio::time::delay_for;
+use tokio::time::sleep;
 use tracing::instrument;
 use tracing_honeycomb::{
     current_dist_trace_ctx, new_honeycomb_telemetry_layer, register_dist_tracing_root, SpanId,
@@ -28,10 +28,10 @@ async fn spawn_child_process(process_name: &str) {
         .spawn();
 
     // Make sure our child succeeded in spawning and process the result
-    let future = child.expect("failed to spawn");
+    let mut future = child.expect("failed to spawn");
 
     // Await until the future (and the command) completes
-    future.await.expect("awaiting process failed");
+    future.wait().await.expect("awaiting process failed");
 }
 
 #[instrument]
@@ -39,7 +39,7 @@ async fn run_in_child_process(trace_id: TraceId, parent_span: SpanId) {
     register_dist_tracing_root(trace_id, Some(parent_span)).unwrap();
 
     tracing::info!("leaf fn");
-    delay_for(Duration::from_millis(50)).await
+    sleep(Duration::from_millis(50)).await
 }
 
 #[tokio::main]
@@ -66,7 +66,7 @@ async fn main() {
     }
 
     // janky, but delay seems to be required to ensure all traces are sent to honeycomb by libhoney
-    delay_for(Duration::from_secs(10)).await
+    sleep(Duration::from_secs(10)).await
 }
 
 fn register_global_subscriber() {

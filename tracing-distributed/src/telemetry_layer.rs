@@ -401,7 +401,7 @@ mod tests {
             #[instrument]
             async fn g(s: String) {
                 // delay to force multiple span entry
-                tokio::time::delay_for(Duration::from_millis(100)).await;
+                tokio::time::sleep(Duration::from_millis(100)).await;
                 let use_of_reserved_word = "duration-value";
                 tracing::event!(
                     tracing::Level::INFO,
@@ -417,7 +417,7 @@ mod tests {
                 );
             }
 
-            let mut rt = Runtime::new().unwrap();
+            let rt = Runtime::new().unwrap();
             rt.block_on(f(vec![1, 2, 3]));
         });
     }
